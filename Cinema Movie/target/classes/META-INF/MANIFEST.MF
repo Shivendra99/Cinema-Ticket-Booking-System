@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Built-By: hp
+Build-Jdk: 15.0.1
+Implementation-Title: com.cinema-movie-api
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.cinema-booking-system
+Implementation-URL: https://projects.spring.io/spring-boot/#/spring-boot
+ -starter-parent/com.cinema-movie-api
+Created-By: Maven Integration for Eclipse
+

@@ -1,0 +1,61 @@
+package com.ticket_booking.main.configurations;
+
+import java.util.concurrent.Executor;
+
+import javax.sql.DataSource;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+@EnableAsync
+public class ConfigClass {
+
+	@Bean
+	@LoadBalanced
+	public RestTemplate getRestTemplate() {
+		return new RestTemplate();
+	}
+	
+	@Bean(name= "taskExecutor")
+	public Executor getExecutor() {
+		ThreadPoolTaskExecutor executor= new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(2);
+		executor.setMaxPoolSize(3);
+		executor.setQueueCapacity(10);
+		executor.setThreadNamePrefix("Ticket Booking thread");
+		executor.initialize();
+		return executor;
+	}
+	
+//	/**
+//	 * Declaring data source without need of application.properties
+//	 * @return
+//	 */
+//	@Bean(name= "cinemaBookingSystemDataSource")
+//	public DataSource dataSource() {
+//		DriverManagerDataSource dataSource= new DriverManagerDataSource();
+//		
+//		dataSource.setUrl("jdbc:mysql://localhost:3306/cinema_booking_system");
+//		dataSource.setUsername("root");
+//		dataSource.setPassword("harshitsaxena");
+//		
+//		return dataSource;
+//	}
+	
+//	@Primary
+//	@Bean(name= "cinemaBookingSystemDataSource")
+//	@ConfigurationProperties(value= "spring.cinema.datasource")
+//	public DataSource dataSource() {
+//		
+//		return DataSourceBuilder.create().build();
+//	}
+	
+}
