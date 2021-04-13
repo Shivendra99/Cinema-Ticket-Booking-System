@@ -1,6 +1,11 @@
 package com.ticket_booking.main.services;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import javax.persistence.NoResultException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -14,17 +19,19 @@ import com.ticket_booking.main.repositories.TicketBookingRepository;
 
 @Service
 public class TicketBookingService {
-	
+
 	@Autowired
 	private TicketBookingRepository ticketBookingRepository;
-	
+
 	@Autowired
 	private RestTemplate restTemplate;
-	
+
 	private static final String MY_LOG= "My Log: ";
-	
-	public String bookTicket(String userId, int eventId, TicketBooking ticket) {
-		
+
+	public TicketBooking bookTicket(String userId, int eventId, TicketBooking ticket) {
+
+		final String METHOD_NAME= "bookTicket";
+
 		try {
 			CompletableFuture<User> userCompletableFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.USER_API.toString()+ "/userAPI/user/"+ userId, User.class);
 			CompletableFuture<CinemaMovieShows> showCompletableFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.SHOWS_API.toString()+ "/showAPI/show/"+ eventId, CinemaMovieShows.class);
@@ -32,35 +39,134 @@ public class TicketBookingService {
 			User user= (User)userCompletableFuture.get();
 			CinemaMovieShows show= showCompletableFuture.get();
 
-			if(user== null || show== null)
-				return "User/ show doesn't exists.";
-			
+			if(user== null || show== null) {
+				System.out.print(MY_LOG+ "User/ show doesn't exists.");
+				return null;
+			}
+
+			int seat= ticket.getSeats();
+			if(show.getCinemaHall().getCapacity()< seat || seat<= 0) {
+				System.out.print(MY_LOG+ "Seat doesn't exists");
+				return null;
+			}
+
+			boolean isSeatAvaiable= checkSeatAvailability(eventId, seat);
+			if(isSeatAvaiable) {
+				System.out.print(MY_LOG+ "Seat's not available");
+				return null;
+			}
+
 			ticket.setUser(user);
 			ticket.setShow(show);
-			
+
 			// Make synchronous call to make payment API, only on successful response proceed forward
-			
-			int ticketId= ticketBookingRepository.bookTicket(ticket);
-			
-			return "Ticket with ID "+ ticketId+ " booked successfully."; 
+
+			return ticketBookingRepository.bookTicket(ticket);
+
 		}catch(Exception exception) {
 			exception.printStackTrace();
-			return "Error in booking the ticket: "+ exception.toString();
+			System.out.print(MY_LOG+ "Error in "+ METHOD_NAME+ ": "+ exception.toString());
+			return null;
 		}	
 	}
-	
+
+	public boolean checkSeatAvailability(int aEventId, int seat) {
+
+		final String METHOD_NAME= "checkSeatAvailability";
+
+		try {
+			TicketBooking ticket= ticketBookingRepository.getTicketBySeat(aEventId, seat);
+
+			return (ticket== null)? true: false;	
+		}catch(NoResultException noResultException) {
+			System.out.print(MY_LOG+ "Error in "+ METHOD_NAME+ ": "+ noResultException.toString());
+			return false;
+		}catch(Exception exception) {
+			System.out.print(MY_LOG+ exception.toString());
+			return false;
+		}
+
+	}
+
+	public List<Integer> getAvailableSeats(int eventId){
+
+		final String METHOD_NAME= "getAvailableSeats";
+
+		try {
+			CompletableFuture<CinemaMovieShows> showCompletableFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.SHOWS_API.toString()+ "/showAPI/show/"+ eventId, CinemaMovieShows.class);
+
+			List<TicketBooking> ticketList= getTicketListByEvent(eventId);
+			List<Integer> occupiedSeatsList= ticketList.stream()
+					.map(v -> v.getSeats())
+					.collect(Collectors.toList());
+
+			CinemaMovieShows show= showCompletableFuture.get();
+			if(show== null) {
+				System.out.print("No event exists with ID: "+ eventId);
+				return null;
+			}
+
+			int capacity= show.getCinemaHall().getCapacity();
+			List<Integer> availableSeatsList= new ArrayList<Integer>();
+
+			for(int i= 1; i<= capacity; i++)
+				if(!occupiedSeatsList.contains(i))
+					availableSeatsList.add(i);
+
+			return availableSeatsList;
+
+		}catch(Exception exception) {
+			System.out.print(MY_LOG+ METHOD_NAME+ ": "+ exception.toString());
+			return null;
+		}
+
+	}
+
+	public List<TicketBooking> getTicketListByEvent(int aEventId){
+		final String METHOD_NAME= "getFilteredTicketList";
+
+		try {
+			return ticketBookingRepository.getTicketsByEvent(aEventId);
+		}catch(Exception exception) {
+			System.out.print(MY_LOG+ METHOD_NAME+ ": "+ exception.toString());
+			return null;
+		}
+	}
+
+	public List<TicketBooking> getTicketListByUser(String aUserId){
+		final String METHOD_NAME= "getFilteredTicketList";
+
+		try {
+			return ticketBookingRepository.getTicketsByUser(aUserId);
+		}catch(Exception exception) {
+			System.out.print(MY_LOG+ METHOD_NAME+ ": "+ exception.toString());
+			return null;
+		}
+	}
+
+	public boolean deleteTicket(int aTicketId) {
+		final String METHOD_NAME= "deleteTicket";
+
+		try {
+			return ticketBookingRepository.deleteTicket(aTicketId);
+		}catch(Exception exception) {
+			System.out.print(MY_LOG+ METHOD_NAME+ ": "+ exception.toString());
+			return false;
+		}
+	}
+
 	@Async
 	private <T> CompletableFuture<T> makeGetCall(String aUrl, Class<T> aResponseType, Object...aUriVariables){
-		
+
 		T response= null;
-		
+
 		if(aUriVariables.length== 0)
 			response= restTemplate.getForObject(aUrl, aResponseType);
 		else
 			response= restTemplate.getForObject(aUrl, aResponseType, aUriVariables);
-		
+
 		return CompletableFuture.completedFuture(response);
-		
+
 	}
 
 }
