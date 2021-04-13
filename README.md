@@ -1,5 +1,5 @@
 # Cinema-Ticket-Booking-System
-Backend for a Cinema Ticket Booking System.
+Backend for a Cinema Ticket Booking System. Developed using Spring Boot with Microservices architecture.
 
 Steps to install:
 1. Setup JVM (1.8+)
