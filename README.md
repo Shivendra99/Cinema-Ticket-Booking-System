@@ -10,4 +10,8 @@ Steps to configure in Eclipse:
 1. Import the projects
 2. Take maven update 
 3. Specify data source points on application.properties of respective projects.
-4. First make EurekaServer service Up. Followed by remaining.
+4. First make EurekaServer service registry Up. Followed by remaining services.
+
+LLD: 
+![image](https://user-images.githubusercontent.com/32619744/115117766-c81e5b00-9fbd-11eb-8476-3573cd3bcebd.png)
+
