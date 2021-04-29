@@ -2,7 +2,7 @@ package com.ticket_booking.main.services;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.persistence.NoResultException;
@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.netflix.hystrix.HystrixCommand;
 import com.ticket_booking.main.entities.CinemaMovieShows;
 import com.ticket_booking.main.entities.TicketBooking;
 import com.ticket_booking.main.entities.User;
@@ -25,6 +26,9 @@ public class TicketBookingService {
 
 	@Autowired
 	private RestTemplate restTemplate;
+	
+	@Autowired
+	private HystrixCommand.Setter config;
 
 	private static final String MY_LOG= "My Log: ";
 
@@ -33,18 +37,18 @@ public class TicketBookingService {
 		final String METHOD_NAME= "bookTicket";
 
 		try {
-			CompletableFuture<User> userCompletableFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.USER_API.toString()+ "/userAPI/user/"+ userId, User.class);
-			CompletableFuture<CinemaMovieShows> showCompletableFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.SHOWS_API.toString()+ "/showAPI/show/"+ eventId, CinemaMovieShows.class);
+			Future<User> userFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.USER_API.toString()+ "/userAPI/user/"+ userId, User.class);
+			Future<CinemaMovieShows> showFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.SHOWS_API.toString()+ "/showAPI/show/"+ eventId, CinemaMovieShows.class);
 
-			User user= (User)userCompletableFuture.get();
-			CinemaMovieShows show= showCompletableFuture.get();
+			User user= (User)userFuture.get();
+			CinemaMovieShows show= showFuture.get();
 
 			if(user== null || show== null) {
 				System.out.print(MY_LOG+ "User/ show doesn't exists.");
 				return null;
 			}
 
-			int seat= ticket.getSeats();
+			int seat= ticket.getSeat();
 			if(show.getCinemaHall().getCapacity()< seat || seat<= 0) {
 				System.out.print(MY_LOG+ "Seat doesn't exists");
 				return null;
@@ -93,14 +97,14 @@ public class TicketBookingService {
 		final String METHOD_NAME= "getAvailableSeats";
 
 		try {
-			CompletableFuture<CinemaMovieShows> showCompletableFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.SHOWS_API.toString()+ "/showAPI/show/"+ eventId, CinemaMovieShows.class);
+			Future<CinemaMovieShows> showFuture= makeGetCall(API_URL.HTTP.toString()+ API_URL.SHOWS_API.toString()+ "/showAPI/show/"+ eventId, CinemaMovieShows.class);
 
 			List<TicketBooking> ticketList= getTicketListByEvent(eventId);
 			List<Integer> occupiedSeatsList= ticketList.stream()
-					.map(v -> v.getSeats())
+					.map(v -> v.getSeat())
 					.collect(Collectors.toList());
 
-			CinemaMovieShows show= showCompletableFuture.get();
+			CinemaMovieShows show= showFuture.get();
 			if(show== null) {
 				System.out.print("No event exists with ID: "+ eventId);
 				return null;
@@ -156,16 +160,10 @@ public class TicketBookingService {
 	}
 
 	@Async
-	private <T> CompletableFuture<T> makeGetCall(String aUrl, Class<T> aResponseType, Object...aUriVariables){
+	private <T> Future<T> makeGetCall(String aUrl, Class<T> aResponseType, Object...aUriVariables){
 
-		T response= null;
-
-		if(aUriVariables.length== 0)
-			response= restTemplate.getForObject(aUrl, aResponseType);
-		else
-			response= restTemplate.getForObject(aUrl, aResponseType, aUriVariables);
-
-		return CompletableFuture.completedFuture(response);
+		Future<T> response= (new TicketAPIHystrixCommand<T>(config, restTemplate, aUrl, aResponseType, aUriVariables)).queue();
+		return response;
 
 	}
 

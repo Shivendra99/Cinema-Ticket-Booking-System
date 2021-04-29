@@ -31,19 +31,19 @@ public class TicketBooking {
 	private String personName;
 	
 	@Column(name= "seats", nullable= false)
-	private int seats;
+	private int seat;
 	
 	public TicketBooking() {
 		super();
 	}
 	
-	public TicketBooking(int ticketId, User user, CinemaMovieShows show, String personName, int seats) {
+	public TicketBooking(int ticketId, User user, CinemaMovieShows show, String personName, int seat) {
 		super();
 		this.ticketId= ticketId;
 		this.user = user;
 		this.show = show;
 		this.personName = personName;
-		this.seats = seats;
+		this.seat = seat;
 	}
 
 	public User getUser() {
@@ -78,12 +78,12 @@ public class TicketBooking {
 		this.personName = personName;
 	}
 
-	public int getSeats() {
-		return seats;
+	public int getSeat() {
+		return seat;
 	}
 
-	public void setSeats(int seats) {
-		this.seats = seats;
+	public void setSeat(int seat) {
+		this.seat = seat;
 	}
 
 }
