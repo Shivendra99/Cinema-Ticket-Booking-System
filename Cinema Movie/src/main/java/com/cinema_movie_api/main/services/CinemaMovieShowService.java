@@ -2,8 +2,9 @@ package com.cinema_movie_api.main.services;
 
 import java.sql.Date;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,8 @@ import com.cinema_movie_api.main.entities.CinemaHall;
 import com.cinema_movie_api.main.entities.CinemaMovieShows;
 import com.cinema_movie_api.main.entities.Movie;
 import com.cinema_movie_api.main.repositories.CinemaMovieRepository;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
 
 @Service
 public class CinemaMovieShowService{
@@ -23,6 +26,19 @@ public class CinemaMovieShowService{
 	
 	@Autowired
 	private RestTemplate restTemplate;
+	
+	@Autowired
+	private ObjectFactory<ShowAPICallHystrixCommand> remoteAPIFactory;
+	
+	@Autowired
+	private HystrixCommand.Setter config;
+	
+	public <T> ShowAPICallHystrixCommand<T> getRemoteAPIFactoryHystrixCommandInstance() {
+		HystrixCommand.Setter config = HystrixCommand.Setter
+                .withGroupKey(HystrixCommandGroupKey.Factory.asKey("RemoteAPICallGroup"));
+		return null;
+	}
+	
 	
 	//@Autowired
 	//private WebClient.Builder webClient;
@@ -49,8 +65,8 @@ public class CinemaMovieShowService{
 	public boolean addShowList(List<CinemaMovieShows> aShowList, List<String> aCinemaIdList, List<String> aMovieIdList) {
 		try {
 			
-			CompletableFuture<List> cinemaApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.CINEMA_API.toString()+ "/cinemaHallsIn/cinemaId", List.class, aCinemaIdList);
-			CompletableFuture<List> movieApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.MOVIE_API.toString()+ "/moviesIn/movieId", List.class, aMovieIdList);
+			Future<List> cinemaApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.CINEMA_API.toString()+ "/cinemaHallsIn/cinemaId", List.class, aCinemaIdList);
+			Future<List> movieApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.MOVIE_API.toString()+ "/moviesIn/movieId", List.class, aMovieIdList);
 			
 			List<CinemaHall> cinemaHallList= cinemaApiResponse.get();
 			List<Movie> movieList= movieApiResponse.get();
@@ -88,8 +104,8 @@ public class CinemaMovieShowService{
 			                              .bodyToMono(CinemaHall.class)
 			                              .block();*/
 			
-			CompletableFuture<CinemaHall> cinemaApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.CINEMA_API.toString()+ "/cinemaAPI/cinemaHall/"+ aCinemaId, CinemaHall.class);
-			CompletableFuture<Movie> movieApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.MOVIE_API.toString()+ "/movieAPI/movieById/"+ aMovieId, Movie.class);
+			Future<CinemaHall> cinemaApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.CINEMA_API.toString()+ "/cinemaAPI/cinemaHall/"+ aCinemaId, CinemaHall.class);
+			Future<Movie> movieApiResponse= makeGetCall(API_URL.HTTP.toString()+ API_URL.MOVIE_API.toString()+ "/movieAPI/movieById/"+ aMovieId, Movie.class);
 			
 			CinemaHall cinema= cinemaApiResponse.get();
 			if(cinema== null)
@@ -129,10 +145,48 @@ public class CinemaMovieShowService{
 	}
 	
 	@Async
-	private <T> CompletableFuture<T> makeGetCall(String aUrl, Class<T> aResponseType, Object...aUriVariables) {
+	//This doesn't works well with classes having @Async annotations, use it when making synchronous API calls.
+	//@HystrixCommand(fallbackMethod = "makeGetCallFallBack")
+	private <T> Future<T> makeGetCall(String aUrl, Class<T> aResponseType, Object...aUriVariables) {
 		
-		T response=  restTemplate.getForObject(aUrl, aResponseType, aUriVariables) ;
-		return CompletableFuture.completedFuture(response);
+		Future<T> response=  new ShowAPICallHystrixCommand(config, restTemplate, aUrl, aResponseType, aUriVariables).queue();
+		return response;
 	}
+	
+//	/**
+//	 * For each particular response type, specify fallback response here
+//	 * 
+//	 * @param <T>
+//	 * @param aUrl
+//	 * @param aResponseType
+//	 * @param aUriVariables
+//	 * @return
+//	 */
+//	@Async
+//	private <T> CompletableFuture<T> makeGetCallFallBack(String aUrl, Class<T> aResponseType, Object...aUriVariables) {
+//		
+//		if(aResponseType == CinemaHall.class) {
+//			CinemaHall cinemaHall= new CinemaHall();
+//			cinemaHall.setCapacity(1);
+//			cinemaHall.setCinemaId("NA");
+//			cinemaHall.setCinemaName("NA");
+//			cinemaHall.setCity("NA");
+//			
+//			return CompletableFuture.completedFuture((T)cinemaHall);
+//		}
+//		else if(aResponseType== Movie.class) {
+//			Movie movie= new Movie();
+//			movie.setMovieId("NA");
+//			movie.setMovieJonre("Others");
+//			movie.setMovieLanguage("NA");
+//			movie.setMovieName("NA");
+//			movie.setReleaseDate(new Date(0));
+//			
+//			return CompletableFuture.completedFuture((T)movie);
+//		}
+//		
+//		return CompletableFuture.completedFuture(null);
+//		return null;
+//	}
 	
 }

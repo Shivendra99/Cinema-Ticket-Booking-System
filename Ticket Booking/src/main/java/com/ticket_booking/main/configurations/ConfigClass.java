@@ -2,17 +2,17 @@ package com.ticket_booking.main.configurations;
 
 import java.util.concurrent.Executor;
 
-import javax.sql.DataSource;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
+
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandProperties;
 
 @Configuration
 @EnableAsync
@@ -21,7 +21,9 @@ public class ConfigClass {
 	@Bean
 	@LoadBalanced
 	public RestTemplate getRestTemplate() {
-		return new RestTemplate();
+		HttpComponentsClientHttpRequestFactory clientRequestFactory= new HttpComponentsClientHttpRequestFactory();
+		clientRequestFactory.setConnectTimeout(5000);
+		return new RestTemplate(clientRequestFactory);
 	}
 	
 	@Bean(name= "taskExecutor")
@@ -33,6 +35,22 @@ public class ConfigClass {
 		executor.setThreadNamePrefix("Ticket Booking thread");
 		executor.initialize();
 		return executor;
+	}
+	
+	@Bean(name= "hystrixCommandSetter")
+	public HystrixCommand.Setter getHystrixCommandSetter(){
+		
+		HystrixCommand.Setter config= HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("RemoteAPICallGroup"));
+		
+		HystrixCommandProperties.Setter configProperties= HystrixCommandProperties.Setter();
+		configProperties.withExecutionTimeoutInMilliseconds(3000);
+		configProperties.withCircuitBreakerRequestVolumeThreshold(5);
+		configProperties.withCircuitBreakerErrorThresholdPercentage(50);
+		configProperties.withCircuitBreakerSleepWindowInMilliseconds(2000);
+		
+		config.andCommandPropertiesDefaults(configProperties);
+		
+		return config;
 	}
 	
 //	/**
