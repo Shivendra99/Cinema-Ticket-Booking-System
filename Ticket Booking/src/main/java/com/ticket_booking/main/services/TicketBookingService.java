@@ -164,7 +164,6 @@ public class TicketBookingService {
 
 		Future<T> response= (new TicketAPIHystrixCommand<T>(config, restTemplate, aUrl, aResponseType, aUriVariables)).queue();
 		return response;
-
 	}
 
 }
