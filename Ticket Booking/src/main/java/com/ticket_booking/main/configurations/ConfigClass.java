@@ -2,6 +2,7 @@ package com.ticket_booking.main.configurations;
 
 import java.util.concurrent.Executor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,15 @@ import com.netflix.hystrix.HystrixCommandProperties;
 @Configuration
 @EnableAsync
 public class ConfigClass {
+	
+	@Value("${spring.datasource.url}")
+	private String url;
+	
+	@Value("${spring.datasource.username}")
+	private String userName;
+	
+	@Value("${spring.datasource.password}")
+	private String password;
 
 	@Bean
 	@LoadBalanced
@@ -61,9 +71,9 @@ public class ConfigClass {
 //	public DataSource dataSource() {
 //		DriverManagerDataSource dataSource= new DriverManagerDataSource();
 //		
-//		dataSource.setUrl("jdbc:mysql://localhost:3306/cinema_booking_system");
-//		dataSource.setUsername("root");
-//		dataSource.setPassword("harshitsaxena");
+//		dataSource.setUrl(url);
+//		dataSource.setUsername(userName);
+//		dataSource.setPassword(password);
 //		
 //		return dataSource;
 //	}

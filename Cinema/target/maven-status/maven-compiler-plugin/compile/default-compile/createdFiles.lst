@@ -1,0 +1,7 @@
+com\cinema_api\main_application\controllers\CinemaApiController.class
+com\cinema_api\main_application\entities\CinemaHall.class
+com\cinema_api\main_application\CinemaAPIMainApplication.class
+com\cinema_api\main_application\entities\Movie.class
+com\cinema_api\main_application\entities\CinemaMovieShows.class
+com\cinema_api\main_application\services\CinemaHallService.class
+com\cinema_api\main_application\repositories\CinemaRepository.class

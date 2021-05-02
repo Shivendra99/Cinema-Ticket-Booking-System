@@ -10,8 +10,26 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>2.1.2.RELEASE</version>
-		<relativePath/>
+		<relativePath />
 	</parent>
+
+	<build>
+		<plugins>
+		<!-- Spring boot maven plugin for creating executable jar -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>com.cinema_api.main_application.CinemaAPIMainApplication</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<properties>
 		<spring-cloud.version>Greenwich.RELEASE</spring-cloud.version>
