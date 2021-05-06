@@ -81,7 +81,7 @@ public class TicketBookingService {
 		try {
 			TicketBooking ticket= ticketBookingRepository.getTicketBySeat(aEventId, seat);
 
-			return (ticket== null)? true: false;	
+			return (ticket== null)? false: true;	
 		}catch(NoResultException noResultException) {
 			System.out.print(MY_LOG+ "Error in "+ METHOD_NAME+ ": "+ noResultException.toString());
 			return false;

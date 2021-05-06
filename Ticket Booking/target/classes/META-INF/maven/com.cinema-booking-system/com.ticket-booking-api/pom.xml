@@ -12,10 +12,10 @@
 		<version>2.1.2.RELEASE</version>
 		<relativePath />
 	</parent>
-	
+
 	<build>
 		<plugins>
-		<!-- Spring boot maven plugin for creating executable jar -->
+			<!-- Spring boot maven plugin for creating executable jar -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -86,6 +86,12 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-config -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
 
 	</dependencies>
