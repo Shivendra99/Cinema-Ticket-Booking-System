@@ -57,7 +57,7 @@ public class TicketBookingRepository {
 			entityManager= getEntityManager();
 			entityManager.getTransaction().begin();
 
-			Query query= entityManager.createQuery("select t from TicketBooking t where t.show.eventId = ?1 and t.seats = ?2", TicketBooking.class);
+			Query query= entityManager.createQuery("select t from TicketBooking t where t.show.eventId = ?1 and t.seat = ?2", TicketBooking.class);
 			query.setParameter(1, aEventId);
 			query.setParameter(2, aSeat);
 			TicketBooking ticket= (TicketBooking) query.getSingleResult();
