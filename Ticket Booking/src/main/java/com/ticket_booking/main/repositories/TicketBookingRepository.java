@@ -50,7 +50,7 @@ public class TicketBookingRepository {
 
 	}
 
-	public TicketBooking getTicketBySeat(int aEventId, int aSeat) {
+	public TicketBooking getTicketBySeat(int aEventId, int aSeat){
 
 		EntityManager entityManager= null;
 		try {

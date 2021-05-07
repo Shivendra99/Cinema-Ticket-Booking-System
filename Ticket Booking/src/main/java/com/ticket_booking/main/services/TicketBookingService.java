@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.persistence.NoResultException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -55,7 +56,7 @@ public class TicketBookingService {
 			}
 
 			boolean isSeatAvaiable= checkSeatAvailability(eventId, seat);
-			if(isSeatAvaiable) {
+			if(!isSeatAvaiable) {
 				System.out.print(MY_LOG+ "Seat's not available");
 				return null;
 			}
@@ -84,6 +85,9 @@ public class TicketBookingService {
 			return (ticket== null)? true: false;	
 		}catch(NoResultException noResultException) {
 			System.out.print(MY_LOG+ "Error in "+ METHOD_NAME+ ": "+ noResultException.toString());
+			return true;
+		}catch(EmptyResultDataAccessException emptyResultDataAccessException) {
+			System.out.print(MY_LOG+ "Error in "+ METHOD_NAME+ ": "+ emptyResultDataAccessException.toString());
 			return true;
 		}catch(Exception exception) {
 			System.out.print(MY_LOG+ exception.toString());
