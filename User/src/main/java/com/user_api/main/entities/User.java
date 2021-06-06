@@ -21,6 +21,20 @@ public class User {
 	
 	@Column(name= "user_type", nullable= false)
 	private String userType;
+	
+	@Column(name= "password", nullable= false)
+	private String password;
+	
+	@Column(name= "enabled", length= 1, nullable= false)
+	private String enabled;
+	
+	public void setEnabled(boolean isEnabled) {
+		this.enabled= isEnabled ? "y": "n";
+	}
+	
+	public boolean isEnabled() {
+		return ("y".equalsIgnoreCase(enabled))? true: false;
+	}
 
 	public String getUserId() {
 		return userId;
@@ -46,12 +60,13 @@ public class User {
 		this.phoneNo = phoneNo;
 	}
 
-	public User(String userId, String userName, String phoneNo, String userType) {
+	public User(String userId, String userName, String phoneNo, String userType, String password) {
 		super();
 		this.userId = userId;
 		this.userName = userName;
 		this.phoneNo = phoneNo;
 		this.userType= userType;
+		this.password= password;
 	}
 	
 	public User() {
@@ -64,5 +79,13 @@ public class User {
 
 	public void setUserType(String userType) {
 		this.userType = userType;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 }
